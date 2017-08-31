@@ -182,7 +182,7 @@ namespace Zoomicon.Media.Streaming.Mjpeg
                 await _dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
                 {
                     // resets the BitmapImage to the new frame
-                    using (InMemoryRandomAccessStream ms = new InMemoryRandomAccessStream())
+                    using (InMemoryRandomAccessStream ms = new InMemoryRandomAccessStream()) //see https://stackoverflow.com/questions/39370588/mjpeg-stream-decoder-for-universal-windows-platform-app
                     {
                         await ms.WriteAsync(CurrentFrame);
                         ms.Seek(0);
