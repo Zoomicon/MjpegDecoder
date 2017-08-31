@@ -1,17 +1,25 @@
-﻿using System;
+﻿//Filename: MjpegDecoder.cs
+//Author: George Birbilis (http://zoomicon.com)
+//Version: 20170831
+
+//based on:
+// https://github.com/BrianPeek/mjpeg/blob/master/MJPEG/MjpegProcessor/MjpegDecoder.cs
+// https://github.com/follesoe/MjpegProcessor/blob/master/src/MjpegProcessor/MjpegDecoder.cs
+
+using System;
 using System.IO;
 using System.Net;
 
-//using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 using Windows.UI.Core;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading;
-//using System.Drawing;
+using System.Text;
+using Windows.UI.Xaml.Media.Imaging;
 
-namespace MjpegProcessor2
+namespace Zoomicon.Media.Streaming.Mjpeg
 {
-    public class MjpegDecoder2
+
+    public class MjpegDecoder
     {
 
         // magic 2 byte header for JPEG images
@@ -25,7 +33,8 @@ namespace MjpegProcessor2
 
         // current encoded JPEG image
         public IBuffer CurrentFrame { get; private set; }
-        //public byte[] CurrentFrame { get; private set; }
+
+        public BitmapImage BitmapImage { get; set; }
 
         // used to marshal back to UI thread
         //private SynchronizationContext _context;
@@ -35,9 +44,11 @@ namespace MjpegProcessor2
         public event EventHandler<FrameReadyEventArgs> FrameReady;
         public event EventHandler<ErrorEventArgs> Error;
 
-        public MjpegDecoder2()
+        public MjpegDecoder()
         {
             //_context = SynchronizationContext.Current;
+
+            BitmapImage = new BitmapImage();
 
             if (CoreWindow.GetForCurrentThread() != null)
                 _dispatcher = CoreWindow.GetForCurrentThread().Dispatcher;
@@ -65,7 +76,7 @@ namespace MjpegProcessor2
 
         private void OnGetResponse(IAsyncResult asyncResult)
         {
-            byte[] imageBuffer = new byte[1024 * 1024];
+            byte[] imageBuffer = new byte[1024 * 1024]; //TODO: fix hardcoded buffer size (is this related at all to ChunkSize?)
 
             // get the response
             HttpWebRequest req = (HttpWebRequest)asyncResult.AsyncState;
@@ -77,7 +88,7 @@ namespace MjpegProcessor2
                 // find our magic boundary value
                 string contentType = resp.Headers["Content-Type"];
                 if (!string.IsNullOrEmpty(contentType) && !contentType.Contains("="))
-                    throw new Exception("Invalid content-type header.  The camera is likely not returning a proper MJPEG stream.");
+                    throw new Exception("Invalid content-type header. This is probably not a proper MJPEG stream.");
 
                 string boundary = resp.Headers["Content-Type"].Split('=')[1].Replace("\"", "");
                 byte[] boundaryBytes = Encoding.UTF8.GetBytes(boundary.StartsWith("--") ? boundary : "--" + boundary);
@@ -133,39 +144,57 @@ namespace MjpegProcessor2
                         }
                     }
                 }
-                /**/resp.Dispose();
+                resp.Dispose(); //TODO: see if needed
             }
             catch (Exception ex)
             {
                 if (Error != null)
-                    _dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => Error(this, new ErrorEventArgs() { Message = ex.Message, ErrorCode = ex.HResult }));
-                //_context.Post(delegate { Error(this, new ErrorEventArgs(ex.Message)); }, null);
+                {
+                    #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                    _dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => Error(this, new ErrorEventArgs { Message = ex.Message, ErrorCode = ex.HResult })); //ignore warning
+                    #pragma warning restore CS4014
+                    //_context.Post(() => Error(this, new ErrorEventArgs(ex.Message, ErrorCode = ex.HResult)), null);
+                }
             }
         }
 
-        private void ProcessFrame(byte[] frame)
+        private async void ProcessFrame(byte[] frame)
         {
             //CurrentFrame = frame;
             CurrentFrame = frame.AsBuffer();
 
+            // need to get this back on the UI thread
 
-			// need to get this back on the UI thread
-            _context.Post(delegate
+            /*
+            _context.Post(() =>
+            {
+                // resets the BitmapImage to the new frame
+                BitmapImage.SetSource(new MemoryStream(frame, 0, frame.Length));
+
+                // tell whoever's listening that we have a frame to draw
+                if (FrameReady != null)
+                    FrameReady(this, new FrameReadyEventArgs { FrameBuffer = CurrentFrame, BitmapImage = BitmapImage });
+            }, null);
+            */
+
+            if (_dispatcher != null)
+            {
+                await _dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
                 {
+                    // resets the BitmapImage to the new frame
+                    using (InMemoryRandomAccessStream ms = new InMemoryRandomAccessStream())
+                    {
+                        await ms.WriteAsync(CurrentFrame);
+                        ms.Seek(0);
+
+                        await BitmapImage.SetSourceAsync(ms);
+                    }
+
                     // tell whoever's listening that we have a frame to draw
                     if (FrameReady != null)
-                        FrameReady(this, new FrameReadyEventArgs(CurrentFrame));
-                }, null);
-
-			if(_dispatcher != null)
-			{
-				await _dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-				{
-					// tell whoever's listening that we have a frame to draw
-					if (FrameReady != null)
-						FrameReady(this, new FrameReadyEventArgs { FrameBuffer = frame.AsBuffer() });
-				});
-			}
+                        FrameReady(this, new FrameReadyEventArgs { FrameBuffer = CurrentFrame, BitmapImage = BitmapImage });
+                });
+            }
 
         }
     }
@@ -201,22 +230,14 @@ namespace MjpegProcessor2
 
     public class FrameReadyEventArgs : EventArgs
     {
-        public byte[] FrameBuffer { get; }
-
-        public FrameReadyEventArgs(byte[] buffer)
-        {
-            FrameBuffer = buffer;
-        }
+        public IBuffer FrameBuffer { get; set; }
+        public BitmapImage BitmapImage { get; set; }
     }
 
     public class ErrorEventArgs : EventArgs
     {
         public string Message { get; set; }
-
-        public ErrorEventArgs(string message)
-        {
-            Message = message;
-        }
-		public int ErrorCode { get; set; }
+        public int ErrorCode { get; set; }
     }
+
 }

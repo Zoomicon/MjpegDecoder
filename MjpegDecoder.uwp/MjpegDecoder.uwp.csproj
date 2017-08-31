@@ -106,8 +106,7 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="MjpegDecoder1.cs" />
-    <Compile Include="MjpegDecoder2.cs" />
+    <Compile Include="MjpegDecoder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Properties\MjpegDecoder.uwp.rd.xml" />
   </ItemGroup>
