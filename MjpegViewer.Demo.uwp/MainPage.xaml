@@ -15,19 +15,25 @@
 
         <!--#region Toolbar-->
         
-        <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Grid.Row="0">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
+            
+            <TextBlock
+                Text="Url: "
+                Grid.Column="0"
+                />
             <TextBox
                 x:Name="txtUri"
-                Grid.Column="0"
+                Grid.Column="1"
                 HorizontalAlignment="Stretch" VerticalAlignment="Top"
                 />
             <Button
                 x:Name="btnGo"
-                Grid.Column="1"
+                Grid.Column="2"
                 Content=">"
                 Click="btnGo_Click"
                 />
