@@ -1,6 +1,6 @@
 ﻿//Filename: MjpegDecoder.cs
 //Author: George Birbilis (http://zoomicon.com)
-//Version: 20170831
+//Version: 20170902
 
 //based on:
 // https://github.com/BrianPeek/mjpeg/blob/master/MJPEG/MjpegProcessor/MjpegDecoder.cs
@@ -144,7 +144,7 @@ namespace Zoomicon.Media.Streaming.Mjpeg
                         }
                     }
                 }
-                resp.Dispose(); //TODO: see if needed
+                resp.Dispose(); //dispose the response stream
             }
             catch (Exception ex)
             {
