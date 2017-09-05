@@ -3,7 +3,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace Zoomicon.Media.Streaming.MJpeg
+namespace Zoomicon.Media.Streaming.Mjpeg
 {
     public class FrameReadyEventArgs : EventArgs
     {

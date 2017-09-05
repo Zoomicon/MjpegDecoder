@@ -12,8 +12,6 @@ using Windows.Storage.Streams;
 using Windows.UI.Core;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
-using Windows.UI.Xaml.Media.Imaging;
-using Zoomicon.Media.Streaming.MJpeg;
 
 namespace Zoomicon.Media.Streaming.Mjpeg
 {
