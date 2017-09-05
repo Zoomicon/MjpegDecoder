@@ -1,6 +1,4 @@
 ﻿//Filename: MjpegDecoder.cs
-//Author: George Birbilis (http://zoomicon.com)
-//Version: 20170902
 
 //based on:
 // https://github.com/BrianPeek/mjpeg/blob/master/MJPEG/MjpegProcessor/MjpegDecoder.cs
@@ -15,6 +13,7 @@ using Windows.UI.Core;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using Windows.UI.Xaml.Media.Imaging;
+using Zoomicon.Media.Streaming.MJpeg;
 
 namespace Zoomicon.Media.Streaming.Mjpeg
 {
@@ -31,13 +30,7 @@ namespace Zoomicon.Media.Streaming.Mjpeg
         // used to cancel reading the stream
         private bool _streamActive;
 
-        // current encoded JPEG image
-        public IBuffer CurrentFrame { get; private set; }
-
-        public BitmapImage BitmapImage { get; set; }
-
         // used to marshal back to UI thread
-        //private SynchronizationContext _context;
         private readonly CoreDispatcher _dispatcher;
 
         // event to get the buffer above handed to you
@@ -46,10 +39,6 @@ namespace Zoomicon.Media.Streaming.Mjpeg
 
         public MjpegDecoder()
         {
-            //_context = SynchronizationContext.Current;
-
-            BitmapImage = new BitmapImage();
-
             if (CoreWindow.GetForCurrentThread() != null)
                 _dispatcher = CoreWindow.GetForCurrentThread().Dispatcher;
         }
@@ -153,46 +142,23 @@ namespace Zoomicon.Media.Streaming.Mjpeg
                     #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                     _dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => Error(this, new ErrorEventArgs { Message = ex.Message, ErrorCode = ex.HResult })); //ignore warning
                     #pragma warning restore CS4014
-                    //_context.Post(() => Error(this, new ErrorEventArgs(ex.Message, ErrorCode = ex.HResult)), null);
                 }
             }
         }
 
         private async void ProcessFrame(byte[] frame)
         {
-            //CurrentFrame = frame;
-            CurrentFrame = frame.AsBuffer();
+            IBuffer CurrentFrame = frame.AsBuffer();
 
             // need to get this back on the UI thread
 
-            /*
-            _context.Post(() =>
-            {
-                // resets the BitmapImage to the new frame
-                BitmapImage.SetSource(new MemoryStream(frame, 0, frame.Length));
-
-                // tell whoever's listening that we have a frame to draw
-                if (FrameReady != null)
-                    FrameReady(this, new FrameReadyEventArgs { FrameBuffer = CurrentFrame, BitmapImage = BitmapImage });
-            }, null);
-            */
-
             if (_dispatcher != null)
             {
-                await _dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+                await _dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                 {
-                    // resets the BitmapImage to the new frame
-                    using (InMemoryRandomAccessStream ms = new InMemoryRandomAccessStream()) //see https://stackoverflow.com/questions/39370588/mjpeg-stream-decoder-for-universal-windows-platform-app
-                    {
-                        await ms.WriteAsync(CurrentFrame);
-                        ms.Seek(0);
-
-                        await BitmapImage.SetSourceAsync(ms);
-                    }
-
                     // tell whoever's listening that we have a frame to draw
                     if (FrameReady != null)
-                        FrameReady(this, new FrameReadyEventArgs { FrameBuffer = CurrentFrame, BitmapImage = BitmapImage });
+                        FrameReady(this, new FrameReadyEventArgs { FrameBuffer = CurrentFrame });
                 });
             }
 
@@ -226,18 +192,6 @@ namespace Zoomicon.Media.Streaming.Mjpeg
             // not found
             return -1;
         }
-    }
-
-    public class FrameReadyEventArgs : EventArgs
-    {
-        public IBuffer FrameBuffer { get; set; }
-        public BitmapImage BitmapImage { get; set; }
-    }
-
-    public class ErrorEventArgs : EventArgs
-    {
-        public string Message { get; set; }
-        public int ErrorCode { get; set; }
     }
 
 }
