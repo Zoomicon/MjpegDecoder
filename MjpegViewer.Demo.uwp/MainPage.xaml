@@ -31,13 +31,14 @@
             <TextBox
                 x:Name="txtUri"
                 Grid.Column="1"
-                HorizontalAlignment="Stretch" VerticalAlignment="Top"
+                HorizontalAlignment="Stretch" VerticalAlignment="Center"
                 />
             <Button
                 x:Name="btnGo"
                 Grid.Column="2"
                 Content=">"
                 Click="btnGo_Click"
+                VerticalAlignment="Center"               
                 />
         </Grid>
         
