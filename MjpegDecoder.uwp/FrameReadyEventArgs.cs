@@ -18,7 +18,7 @@ namespace Zoomicon.Media.Streaming.Mjpeg
                     ms.WriteAsync(FrameBuffer).GetAwaiter().GetResult();
                     ms.Seek(0);
 
-                    bitmapImage.SetSourceAsync(ms).GetAwaiter().GetResult();
+                    bitmapImage.SetSource(ms);
                 }
                 return bitmapImage;
             }
