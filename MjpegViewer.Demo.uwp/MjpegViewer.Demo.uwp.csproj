@@ -108,6 +108,7 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <None Include="Diagrams\MjpegViewer.Demo.uwp.cd" />
     <None Include="MjpegViewer.Demo.uwp_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
@@ -141,6 +142,7 @@
       <Name>MjpegDecoder.uwp</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
